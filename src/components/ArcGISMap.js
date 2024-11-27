@@ -31,30 +31,30 @@ const ArcGISMap = () => {
       popupTemplate: {
         title: "{name}", // Display the name field in the popup
         content: `
-          <b>Poverty Rate:</b> {poverty_rate}%<br/>
-          <b>Population:</b> {population}<br/>
-          <b>Median Income:</b> ${"{median_income}"}
+          <b>Median Family Income:</b> ${"{median_income}"}<br/>
+          <b>Population:</b> {population}
         `
       },
       renderer: {
         type: "simple", // Simple renderer
         symbol: {
           type: "simple-fill", // Fill the counties with color
-          color: "rgba(0, 0, 255, 0.1)", // Light blue fill
+          color: "rgba(0, 255, 0, 0.1)", // Light green fill
           outline: {
-            color: "rgba(0, 0, 255, 1)", // Blue outline
+            color: "rgba(0, 255, 0, 1)", // Green outline
             width: "1px" // Width of county lines
           }
         },
         visualVariables: [
           {
             type: "color",
-            field: "poverty_rate", // Use the poverty_rate field for visualization
+            field: "median_income", // Use the median_income field for visualization
             stops: [
-              { value: 0, color: "rgba(255, 255, 255, 0.1)" },   // Low poverty: White
-              { value: 10, color: "rgba(255, 229, 204, 0.7)" }, // Medium poverty: Light orange
-              { value: 20, color: "rgba(255, 153, 51, 0.7)" },  // High poverty: Orange
-              { value: 30, color: "rgba(255, 51, 51, 0.7)" }    // Very high poverty: Red
+              { value: 0, color: "rgba(255, 245, 240, 0.7)" },   // Very low income: Light red
+              { value: 60000, color: "rgba(254, 224, 210, 0.7)" }, // Low income: Orange
+              { value: 100000, color: "rgba(253, 187, 132, 0.7)" },  // Medium income: Yellow
+              { value: 200000, color: "rgba(217, 239, 139, 0.7)" },  // High income: Light green
+              { value: 300000, color: "rgba(116, 196, 118, 0.7)" }   // Very high income: Green
             ]
           }
         ]
