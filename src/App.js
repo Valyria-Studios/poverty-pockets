@@ -1,10 +1,12 @@
 import React from "react";
 import ArcGISMap from "./components/ArcGISMap";
 
+
 const App = () => {
   return (
-    <div className="App">
+    <div>
       <ArcGISMap />
+      
     </div>
   );
 };

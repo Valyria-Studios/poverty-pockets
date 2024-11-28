@@ -1,113 +1,54 @@
-import { useEffect } from "react";
-import { loadModules } from "esri-loader";
+import React, { useEffect } from "react";
+import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
 
-const IncomeLayer = ({ view }) => {
+const IncomeLayer = ({ map }) => {
   useEffect(() => {
-    let incomeLayer;
+    const geojsonUrl = "/bay_data.geojson"; // Adjust the path if needed
 
-    loadModules(["esri/layers/FeatureLayer", "esri/renderers/ClassBreaksRenderer"])
-      .then(([FeatureLayer, ClassBreaksRenderer]) => {
-        // Define renderer to style income levels
-        const incomeRenderer = new ClassBreaksRenderer({
-          field: "Median_Income", // Update with the actual field name in your dataset
-          legendOptions: {
-            title: "Median Family Income in Dollars",
-          },
-          classBreakInfos: [
-            {
-              minValue: 0,
-              maxValue: 60000,
-              symbol: {
-                type: "simple-fill",
-                color: "#f7e1d7", // Light pink
-                outline: {
-                  color: "#a3a3a3",
-                  width: 0.5,
-                },
-              },
-              label: "< $60,000",
-            },
-            {
-              minValue: 60001,
-              maxValue: 100000,
-              symbol: {
-                type: "simple-fill",
-                color: "#d39aa0", // Medium purple
-                outline: {
-                  color: "#a3a3a3",
-                  width: 0.5,
-                },
-              },
-              label: "$60,001 - $100,000",
-            },
-            {
-              minValue: 100001,
-              maxValue: 200000,
-              symbol: {
-                type: "simple-fill",
-                color: "#8e5c83", // Darker purple
-                outline: {
-                  color: "#a3a3a3",
-                  width: 0.5,
-                },
-              },
-              label: "$100,001 - $200,000",
-            },
-            {
-              minValue: 200001,
-              maxValue: Infinity,
-              symbol: {
-                type: "simple-fill",
-                color: "#4b2c4e", // Dark purple
-                outline: {
-                  color: "#a3a3a3",
-                  width: 0.5,
-                },
-              },
-              label: "> $200,000",
-            },
-          ],
-        });
-
-        // Add the FeatureLayer for income levels
-        incomeLayer = new FeatureLayer({
-          url: "YOUR_FEATURE_LAYER_URL", // Replace with your Feature Layer or GeoJSON URL
-          renderer: incomeRenderer,
-          outFields: ["*"], // Ensure you fetch all fields, especially Median_Income
-          popupTemplate: {
-            title: "{Name}", // Replace "Name" with your feature's name field
-            content: [
-              {
-                type: "fields",
-                fieldInfos: [
-                  {
-                    fieldName: "Median_Income", // Replace with your income field name
-                    label: "Median Family Income in Dollars",
-                    format: {
-                      digitSeparator: true,
-                      places: 0,
-                    },
-                  },
-                ],
-              },
+    // Define the GeoJSON Layer
+    const incomeLayer = new GeoJSONLayer({
+      url: geojsonUrl,
+      outFields: ["*"], // Fetch all fields
+      popupTemplate: {
+        title: "{name}",
+        content: `
+          <b>Median Income:</b> ${"{median_income}"}
+        `,
+      },
+      renderer: {
+        type: "simple", // Simple Renderer
+        visualVariables: [
+          {
+            type: "color",
+            field: "median_income", // Field to visualize
+            stops: [
+              { value: 30000, color: "rgba(255, 69, 58, 0.7)" }, // Low income (less transparent red)
+              { value: 75000, color: "rgba(255, 221, 51, 0.7)" }, // Medium income (less transparent yellow)
+              { value: 100000, color: "rgba(34, 197, 94, 0.7)" }, // High income (less transparent green)
             ],
           },
-        });
+        ],
+        symbol: {
+          type: "simple-fill", // Fill symbol
+          outline: {
+            color: "rgba(0, 0, 0, 0.5)", // Border outline color
+            width: "0.75px", // Thinner border for better visibility
+          },
+        },
+      },
+    });
 
-        // Add the layer to the map's operational layers
-        view.map.add(incomeLayer);
-      })
-      .catch((error) => console.error(error));
+    // Add the GeoJSON Layer to the map
+    map.add(incomeLayer);
 
-    // Cleanup on component unmount
     return () => {
-      if (incomeLayer) {
-        view.map.remove(incomeLayer);
+      if (map && incomeLayer) {
+        map.remove(incomeLayer); // Cleanup when component unmounts
       }
     };
-  }, [view]);
+  }, [map]);
 
-  return null;
+  return null; // This component doesn't render anything
 };
 
 export default IncomeLayer;
