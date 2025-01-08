@@ -11,6 +11,7 @@ const Legend = () => {
         padding: "10px",
         borderRadius: "5px",
         boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+        zIndex: 1000, // Ensure it's above the map
       }}
     >
       <h4 style={{ margin: "0 0 10px", fontSize: "16px" }}>Income Legend</h4>
