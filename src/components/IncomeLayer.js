@@ -1,48 +1,45 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
 
-const IncomeLayer = ({ map }) => {
+const IncomeLayer = ({ map, geojsonUrl }) => {
   useEffect(() => {
-    const geojsonLayer = new GeoJSONLayer({
-      url: `${process.env.PUBLIC_URL}/san_jose_income.geojson`, // Correct path for your income GeoJSON
-      outFields: ["*"],
-      popupTemplate: {
-        title: "{name}", // Name field in the GeoJSON
-        content: `<b>Median Income:</b> $ {median_income}`,
-      },
-      renderer: {
-        type: "simple",
-        symbol: {
-          type: "simple-fill",
-          outline: {
-            color: "white",
-            width: 1.0,
-          },
+    // Define a renderer for visualizing the features
+    const renderer = {
+      type: "simple", // Simple renderer for polygons
+      symbol: {
+        type: "simple-fill", // Fill symbol
+        color: [0, 120, 210, 0.5], // Blue with transparency
+        outline: {
+          color: "white",
+          width: 1,
         },
-        visualVariables: [
-          {
-            type: "color",
-            field: "median_income",
-            stops: [
-              { value: 30000, color: "rgba(255, 69, 58, 0.7)" }, // Red for low income
-              { value: 75000, color: "rgba(255, 221, 51, 0.7)" }, // Yellow for medium income
-              { value: 100000, color: "rgba(34, 197, 94, 0.7)" }, // Green for high income
-            ],
-          },
-        ],
+      },
+    };
+
+    // Create a GeoJSONLayer
+    const geoJsonLayer = new GeoJSONLayer({
+      url: geojsonUrl, // URL of the GeoJSON file
+      renderer, // Apply the renderer
+      popupTemplate: {
+        title: "{NAMELSAD}",
+        content: `
+          <b>GEOID:</b> {GEOID}<br>
+          <b>Land Area:</b> {ALAND} sq. meters<br>
+          <b>Water Area:</b> {AWATER} sq. meters<br>
+        `,
       },
     });
 
-    map.add(geojsonLayer);
+    // Add the layer to the map
+    map.add(geoJsonLayer);
 
+    // Cleanup: Remove the layer when the component unmounts
     return () => {
-      if (map && geojsonLayer) {
-        map.remove(geojsonLayer); // Cleanup
-      }
+      map.remove(geoJsonLayer);
     };
-  }, [map]);
+  }, [map, geojsonUrl]);
 
-  return null;
+  return null; // This component doesn't render any visible DOM
 };
 
 export default IncomeLayer;
