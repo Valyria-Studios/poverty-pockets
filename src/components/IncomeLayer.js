@@ -3,8 +3,8 @@ import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
 
 const IncomeLayer = ({ map, geojsonUrl }) => {
   useEffect(() => {
-    // Define a renderer for visualizing the features
-    const renderer = {
+    // Define a renderer for the income data
+    const incomeRenderer = {
       type: "simple", // Simple renderer for polygons
       symbol: {
         type: "simple-fill", // Fill symbol
@@ -16,10 +16,23 @@ const IncomeLayer = ({ map, geojsonUrl }) => {
       },
     };
 
-    // Create a GeoJSONLayer
-    const geoJsonLayer = new GeoJSONLayer({
-      url: geojsonUrl, // URL of the GeoJSON file
-      renderer, // Apply the renderer
+    // Define a renderer for the borders
+    const bordersRenderer = {
+      type: "simple", // Simple renderer for polygons
+      symbol: {
+        type: "simple-fill", // Fill symbol
+        color: "rgba(0, 0, 0, 0)", // Transparent fill
+        outline: {
+          color: "blue", // Border color
+          width: 1.5, // Border thickness
+        },
+      },
+    };
+
+    // Create the GeoJSONLayer for income data
+    const incomeLayer = new GeoJSONLayer({
+      url: geojsonUrl, // URL of the GeoJSON file for income data
+      renderer: incomeRenderer, // Apply the renderer for income data
       popupTemplate: {
         title: "{NAMELSAD}",
         content: `
@@ -30,12 +43,18 @@ const IncomeLayer = ({ map, geojsonUrl }) => {
       },
     });
 
-    // Add the layer to the map
-    map.add(geoJsonLayer);
+    // Create the GeoJSONLayer for borders
+    const bordersLayer = new GeoJSONLayer({
+      url: `${process.env.PUBLIC_URL}/bay_area_tracts_geometry.geojson`, // URL of the GeoJSON file for borders
+      renderer: bordersRenderer, // Apply the renderer for borders
+    });
 
-    // Cleanup: Remove the layer when the component unmounts
+    // Add the layers to the map
+    map.addMany([incomeLayer, bordersLayer]);
+
+    // Cleanup: Remove the layers when the component unmounts
     return () => {
-      map.remove(geoJsonLayer);
+      map.removeMany([incomeLayer, bordersLayer]);
     };
   }, [map, geojsonUrl]);
 
