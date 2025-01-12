@@ -3,13 +3,13 @@ import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
 
 const IncomeLayer = ({ map, geojsonUrl }) => {
   useEffect(() => {
-    // Define a renderer for adoption status
+    // Renderer for adoption status with transparency
     const adoptionStatusRenderer = {
       type: "unique-value", // Renderer type for unique values
-      field: "adoption_status", // Field in the GeoJSON for adoption status
+      field: "adoption_status", // Field for adoption status
       defaultSymbol: {
         type: "simple-fill",
-        color: "gray", // Default color for undefined status
+        color: "rgba(128, 128, 128, 0.3)", // Transparent gray for undefined status
         outline: {
           color: "black", // Black border for polygons
           width: 1,
@@ -20,7 +20,7 @@ const IncomeLayer = ({ map, geojsonUrl }) => {
           value: "adopted", // Value for "adopted" status
           symbol: {
             type: "simple-fill",
-            color: "rgba(34, 197, 94, 0.7)", // Green for adopted
+            color: "rgba(34, 197, 94, 0.4)", // Semi-transparent green for adopted
             outline: {
               color: "black", // Black border
               width: 1,
@@ -32,7 +32,7 @@ const IncomeLayer = ({ map, geojsonUrl }) => {
           value: "not adopted", // Value for "not adopted" status
           symbol: {
             type: "simple-fill",
-            color: "rgba(255, 69, 58, 0.7)", // Red for not adopted
+            color: "rgba(255, 69, 58, 0.4)", // Semi-transparent red for not adopted
             outline: {
               color: "black", // Black border
               width: 1,
@@ -43,12 +43,12 @@ const IncomeLayer = ({ map, geojsonUrl }) => {
       ],
     };
 
-    // Define a renderer for the borders
+    // Renderer for borders with transparency
     const bordersRenderer = {
       type: "simple", // Simple renderer for polygons
       symbol: {
         type: "simple-fill", // Fill symbol
-        color: "rgba(0, 0, 0, 0)", // Transparent fill
+        color: "rgba(0, 0, 0, 0)", // Fully transparent fill
         outline: {
           color: "black", // Black border color
           width: 1.5, // Border thickness
@@ -56,37 +56,39 @@ const IncomeLayer = ({ map, geojsonUrl }) => {
       },
     };
 
-    // Create the GeoJSONLayer for income and adoption status
+    // GeoJSONLayer for income and adoption status
     const incomeAdoptionLayer = new GeoJSONLayer({
-      url: geojsonUrl, // URL of the GeoJSON file for income and adoption status
-      renderer: adoptionStatusRenderer, // Apply the renderer for adoption status
+      url: geojsonUrl, // URL of the GeoJSON file
+      renderer: adoptionStatusRenderer, // Renderer for adoption status
       popupTemplate: {
         title: "{NAMELSAD}",
         content: `
           <b>GEOID:</b> {GEOID}<br>
           <b>Land Area:</b> {ALAND} sq. meters<br>
           <b>Water Area:</b> {AWATER} sq. meters<br>
-          <b>Adoption Status:</b> {adoption_status}
+          <b>Adoption Status:</b> {adoption_status}<br>
+          <b>Last Updated By:</b> {last_updated_by}<br>
+          <b>Last Update Date:</b> {last_update_date}
         `,
       },
     });
 
-    // Create the GeoJSONLayer for borders
+    // GeoJSONLayer for borders
     const bordersLayer = new GeoJSONLayer({
-      url: `${process.env.PUBLIC_URL}/bay_area_tracts_geometry.geojson`, // URL of the GeoJSON file for borders
-      renderer: bordersRenderer, // Apply the renderer for borders
+      url: `${process.env.PUBLIC_URL}/bay_area_tracts_geometry.geojson`, // URL for borders GeoJSON
+      renderer: bordersRenderer, // Renderer for borders
     });
 
-    // Add the layers to the map
+    // Add layers to the map
     map.addMany([incomeAdoptionLayer, bordersLayer]);
 
-    // Cleanup: Remove the layers when the component unmounts
+    // Cleanup: Remove layers on component unmount
     return () => {
       map.removeMany([incomeAdoptionLayer, bordersLayer]);
     };
   }, [map, geojsonUrl]);
 
-  return null; // This component doesn't render any visible DOM
+  return null; // No visible DOM element rendered by this component
 };
 
 export default IncomeLayer;
