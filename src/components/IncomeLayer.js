@@ -50,8 +50,8 @@ const IncomeLayer = ({ map, geojsonUrl }) => {
         type: "simple-fill", // Fill symbol
         color: "rgba(0, 0, 0, 0)", // Fully transparent fill
         outline: {
-          color: "black", // Black border color
-          width: 1.5, // Border thickness
+          color: "black", 
+          width: 1.5, 
         },
       },
     };
