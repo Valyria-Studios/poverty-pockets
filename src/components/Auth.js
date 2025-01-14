@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
+import supabase from '../supabaseClient'; // Default export doesn't need curly braces
+
 
 const Auth = ({ setAdminLoggedIn }) => {
   const [email, setEmail] = useState('');
