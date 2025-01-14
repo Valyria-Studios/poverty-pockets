@@ -1,79 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../supabaseClient';
 
 const AdminPanel = () => {
-  const [pockets, setPockets] = useState([]);
-  const [selectedPocket, setSelectedPocket] = useState(null);
+  const [censusTracts, setCensusTracts] = useState([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Fetch pockets from the server
-    fetch('/api/get-pockets')
-      .then((response) => response.json())
-      .then((data) => setPockets(data))
-      .catch((error) => console.error('Error fetching pockets:', error));
+    const fetchCensusTracts = async () => {
+      const { data, error } = await supabase.from('census_tracts').select('*');
+      if (error) {
+        setError(error.message);
+      } else {
+        setCensusTracts(data);
+      }
+    };
+    fetchCensusTracts();
   }, []);
 
-  const updatePocket = (id, adoptedStatus) => {
-    const lastUpdatedBy = 'Admin'; // Replace with dynamic admin data if applicable
-    const lastUpdateDate = new Date().toISOString();
+  const updateAdoptionStatus = async (id, status) => {
+    const { error } = await supabase
+      .from('census_tracts')
+      .update({ adoption_status: status })
+      .eq('id', id);
 
-    fetch('/api/update-pocket', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id, adoptedStatus, lastUpdatedBy, lastUpdateDate }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        // Update state to reflect changes
-        setPockets((prevPockets) =>
-          prevPockets.map((pocket) =>
-            pocket.id === id
-              ? { ...pocket, adoptedStatus, lastUpdatedBy, lastUpdateDate }
-              : pocket
-          )
-        );
-        alert('Pocket updated successfully!');
-      })
-      .catch((error) => console.error('Error updating pocket:', error));
+    if (error) {
+      setError(error.message);
+    } else {
+      setCensusTracts((prev) =>
+        prev.map((tract) =>
+          tract.id === id ? { ...tract, adoption_status: status } : tract
+        )
+      );
+    }
   };
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div>
       <h2>Admin Panel</h2>
-      <table border="1" cellPadding="10">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Adopted Status</th>
-            <th>Last Updated By</th>
-            <th>Last Update Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pockets.map((pocket) => (
-            <tr key={pocket.id}>
-              <td>{pocket.id}</td>
-              <td>{pocket.adoptedStatus ? 'Adopted' : 'Not Adopted'}</td>
-              <td>{pocket.lastUpdatedBy}</td>
-              <td>{pocket.lastUpdateDate}</td>
-              <td>
-                <button
-                  onClick={() =>
-                    updatePocket(
-                      pocket.id,
-                      !pocket.adoptedStatus
-                    )
-                  }
-                >
-                  {pocket.adoptedStatus ? 'Mark as Not Adopted' : 'Mark as Adopted'}
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <ul>
+        {censusTracts.map((tract) => (
+          <li key={tract.id}>
+            {tract.name} - {tract.adoption_status}
+            <button onClick={() => updateAdoptionStatus(tract.id, 'adopted')}>
+              Mark Adopted
+            </button>
+            <button
+              onClick={() => updateAdoptionStatus(tract.id, 'not adopted')}
+            >
+              Mark Not Adopted
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
