@@ -107,15 +107,4 @@ poverty-pockets/
 4. **Data Updates**:
    - Integrate an external API or admin interface to update census and income data dynamically.
 
-## Contribution Guidelines
-- Fork the repository and create a feature branch.
-- Ensure all PRs pass linting and are accompanied by proper documentation.
-- Submit a pull request with a detailed explanation of changes.
 
-## Contact
-For further information or to report issues, please contact:
-- **Maintainer**: [Your Organization Name]
-- **Email**: support@valyriastudios.com
-
-## License
-This project is licensed under the MIT License. See the `LICENSE` file for details.
