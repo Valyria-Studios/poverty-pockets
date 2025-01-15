@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "fs";
+const { readFileSync, writeFileSync } = require("fs");
 
 // Bay Area county FIPS codes
 const bayAreaCountyFIPS = {
@@ -14,7 +14,7 @@ const bayAreaCountyFIPS = {
 };
 
 // Function to filter GeoJSON data
-function filterBayAreaTracts(inputFilePath, outputFilePath) {
+function filterBayAreaTracts(inputFilePath, outputFilePath, adoptionStatus) {
   // Read the GeoJSON file
   const geojsonData = JSON.parse(readFileSync(inputFilePath, "utf-8"));
 
@@ -23,7 +23,11 @@ function filterBayAreaTracts(inputFilePath, outputFilePath) {
     Object.values(bayAreaCountyFIPS).includes(
       feature.properties.STATEFP + feature.properties.COUNTYFP
     )
-  );
+  ).map((feature) => {
+    // Add adoption_status property to each feature
+    feature.properties.adoption_status = adoptionStatus;
+    return feature;
+  });
 
   // Create a new GeoJSON object
   const filteredGeoJSON = {
@@ -40,10 +44,11 @@ function filterBayAreaTracts(inputFilePath, outputFilePath) {
     "utf-8"
   );
 
-  console.log(`Filtered GeoJSON saved to ${outputFilePath}`);
+  console.log(`Filtered GeoJSON with adoption status saved to ${outputFilePath}`);
 }
 
 // Example usage
 const inputFilePath = "san_jose_tracts.geojson";
 const outputFilePath = "bay_area_tracts_geometry.geojson";
-filterBayAreaTracts(inputFilePath, outputFilePath);
+const adoptionStatus = ""; // or "not adopted"
+filterBayAreaTracts(inputFilePath, outputFilePath, adoptionStatus);
