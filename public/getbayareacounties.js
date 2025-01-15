@@ -1,4 +1,4 @@
-const { readFileSync, writeFileSync } = require("fs");
+import { readFileSync, writeFileSync } from "fs";
 
 // Bay Area county FIPS codes
 const bayAreaCountyFIPS = {
@@ -50,5 +50,5 @@ function filterBayAreaTracts(inputFilePath, outputFilePath, adoptionStatus) {
 // Example usage
 const inputFilePath = "san_jose_tracts.geojson";
 const outputFilePath = "bay_area_tracts_geometry.geojson";
-const adoptionStatus = ""; // or "not adopted"
+const adoptionStatus = "not adopted"; // or "not adopted"
 filterBayAreaTracts(inputFilePath, outputFilePath, adoptionStatus);
