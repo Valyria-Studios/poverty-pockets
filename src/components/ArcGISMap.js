@@ -3,6 +3,7 @@ import Map from "@arcgis/core/Map";
 import MapView from "@arcgis/core/views/MapView";
 import IncomeLayer from "./IncomeLayer"; // Import the IncomeLayer component
 import Graphic from "@arcgis/core/Graphic"; // For highlighting search results
+import { fetchCensusData } from "../utils/censusAPI"; // Import Census API utility
 import "@arcgis/core/assets/esri/themes/light/main.css"; // ArcGIS CSS
 
 const ArcGISMap = () => {
@@ -13,6 +14,7 @@ const ArcGISMap = () => {
   const [isAdmin, setIsAdmin] = useState(false); // State to check admin login status
   const [searchField, setSearchField] = useState("tract_id"); // Default search field
   const [searchValue, setSearchValue] = useState(""); // Search input value
+  const [searchResults, setSearchResults] = useState(null); // State for search results
 
   useEffect(() => {
     // Initialize the ArcGIS map
@@ -60,35 +62,62 @@ const ArcGISMap = () => {
 
     if (!view) return;
 
-    // Find the IncomeLayer on the map
-    const layer = view.map.layers.find(
-      (layer) => layer.title === "Income and Adoption Layer"
-    );
+    try {
+      const year = "2023"; // Example: using ACS 2023 data
+      const dataset = "acs/acs5/profile"; // Dataset for variables like employment rate
+      const variables = ["NAME", "DP03_0004PE"]; // Example variables (Name, Employment Rate)
 
-    if (layer) {
-      const query = layer.createQuery();
-      query.where = `${searchField} = '${searchValue}'`; // Search by field and value
-      query.returnGeometry = true;
-      query.outFields = ["*"];
+      // Assuming state and county codes are fixed for now (update as needed)
+      const state = "06"; // California state code
+      const county = "013"; // Contra Costa county code
 
-      const result = await layer.queryFeatures(query);
+      const data = await fetchCensusData(year, dataset, variables, state, county, searchValue);
 
-      if (result.features.length > 0) {
-        const feature = result.features[0];
-        view.goTo(feature.geometry); // Zoom to the feature
-        view.popup.open({
-          title: feature.attributes.NAMELSAD,
-          content: `
-            <b>GEOID:</b> ${feature.attributes.GEOID}<br>
-            <b>Land Area:</b> ${feature.attributes.ALAND} sq. meters<br>
-            <b>Water Area:</b> ${feature.attributes.AWATER} sq. meters<br>
-            <b>Adoption Status:</b> ${feature.attributes.adoption_status}<br>
-          `,
-          location: feature.geometry.centroid || feature.geometry.extent.center,
-        });
+      if (data && data.length > 0) {
+        const [headers, values] = data;
+        const resultObject = headers.reduce((acc, header, index) => {
+          acc[header] = values[index];
+          return acc;
+        }, {});
+
+        setSearchResults(resultObject);
+
+        // Highlight the searched tract on the map
+        const layer = view.map.layers.find(
+          (layer) => layer.title === "Income and Adoption Layer"
+        );
+
+        if (layer) {
+          const query = layer.createQuery();
+          query.where = `${searchField} = '${searchValue}'`; // Search by field and value
+          query.returnGeometry = true;
+          query.outFields = ["*"];
+
+          const result = await layer.queryFeatures(query);
+
+          if (result.features.length > 0) {
+            const feature = result.features[0];
+            view.goTo(feature.geometry); // Zoom to the feature
+            view.popup.open({
+              title: resultObject.NAME || feature.attributes.NAMELSAD,
+              content: `
+                <b>GEOID:</b> ${feature.attributes.GEOID || searchValue}<br>
+                <b>Land Area:</b> ${feature.attributes.ALAND || "N/A"} sq. meters<br>
+                <b>Water Area:</b> ${feature.attributes.AWATER || "N/A"} sq. meters<br>
+                <b>Employment Rate:</b> ${resultObject.DP03_0004PE || "N/A"}%<br>
+              `,
+              location: feature.geometry.centroid || feature.geometry.extent.center,
+            });
+          } else {
+            alert("No matching tract found.");
+          }
+        }
       } else {
-        alert("No matching tract found.");
+        alert("No data found for the entered value.");
       }
+    } catch (error) {
+      console.error("Search error:", error);
+      alert("Failed to fetch data. Please try again.");
     }
   };
 
