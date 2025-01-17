@@ -46,10 +46,10 @@ const ArcGISMap = () => {
     const geojsonUrl =
       selectedLayer === "censusTracts"
         ? `${process.env.PUBLIC_URL}/bay_area_tracts_geometry.geojson`
-        : `${process.env.PUBLIC_URL}/zip_codes.geojson`;
+        : `${process.env.PUBLIC_URL}/BayAreaZipCodes.geojson`;
 
-    // Renderer for census tracts with adoption status colors
-    const renderer = {
+    // Renderer for the census tract layer
+    const censusTractRenderer = {
       type: "unique-value",
       field: "adoption_status",
       defaultSymbol: {
@@ -86,11 +86,24 @@ const ArcGISMap = () => {
       ],
     };
 
+    // Renderer for the zip code layer
+    const zipCodeRenderer = {
+      type: "simple",
+      symbol: {
+        type: "simple-fill",
+        color: "rgba(0, 0, 0, 0)", // Transparent fill
+        outline: {
+          color: "blue",
+          width: 1,
+        },
+      },
+    };
+
     // Add the new layer
     const layer = new GeoJSONLayer({
       url: geojsonUrl,
       title: selectedLayer === "censusTracts" ? "Census Tracts" : "Zip Codes",
-      renderer: selectedLayer === "censusTracts" ? renderer : undefined,
+      renderer: selectedLayer === "censusTracts" ? censusTractRenderer : zipCodeRenderer,
       popupTemplate: {
         title: "{NAMELSAD}",
         content: `
@@ -108,6 +121,16 @@ const ArcGISMap = () => {
         `,
       },
     });
+
+    layer
+      .when(() => {
+        view.goTo(layer.fullExtent).catch((error) => {
+          console.error("Error zooming to layer extent:", error);
+        });
+      })
+      .catch((error) => {
+        console.error(`Error loading layer "${layer.title}":`, error);
+      });
 
     map.add(layer);
   }, [selectedLayer, map, view]);
@@ -133,8 +156,8 @@ const ArcGISMap = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Implement search functionality based on searchField and searchValue
     console.log(`Searching for ${searchField}: ${searchValue}`);
+    // Add logic to highlight and zoom to searched area.
   };
 
   return (
@@ -325,27 +348,6 @@ const ArcGISMap = () => {
           </>
         )}
       </div>
-
-      {/* Admin View Indicator */}
-      {isAdmin && (
-        <div
-          style={{
-            position: "absolute",
-            top: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            backgroundColor: "rgba(0, 0, 0, 0.8)",
-            color: "white",
-            padding: "10px",
-            borderRadius: "5px",
-            fontWeight: "bold",
-            fontSize: "16px",
-            zIndex: 1000,
-          }}
-        >
-          Admin View Active
-        </div>
-      )}
     </div>
   );
 };
