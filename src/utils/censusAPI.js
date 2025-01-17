@@ -1,5 +1,3 @@
-/* 
-
 import axios from "axios";
 
 const CENSUS_API_BASE = "https://api.census.gov/data";
@@ -24,4 +22,3 @@ export const fetchCensusData = async (year, dataset, variables, state, county, t
     throw error;
   }
 };
- */
