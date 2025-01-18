@@ -18,9 +18,18 @@ def filter_geojson(input_file, output_file, bounding_box):
         filtered_features = []
         for feature in data.get("features", []):
             geometry = feature.get("geometry")
+            properties = feature.get("properties", {})
             if geometry:
                 geom_shape = shape(geometry)
                 if bounding_box.intersects(geom_shape):
+                    # Add custom properties for popup
+                    zip_code = properties.get("GEOID", "Unknown ZIP Code")
+                    region_name = properties.get("NAMELSAD", "Unknown Region")
+                    properties["popup_zip_code"] = zip_code
+                    properties["popup_region_name"] = region_name
+
+                    # Update the feature properties
+                    feature["properties"] = properties
                     filtered_features.append(feature)
 
         # Prepare the filtered GeoJSON

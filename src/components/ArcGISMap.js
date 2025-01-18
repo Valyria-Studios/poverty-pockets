@@ -120,6 +120,15 @@ const ArcGISMap = () => {
           }
         `,
       },
+      popupTemplate: {
+        title: "Zip Code: {popup_zip_code}",
+        content: `
+          <b>Region Name:</b> {popup_region_name}<br>
+          <b>Land Area:</b> {ALAND} sq. meters<br>
+          <b>Water Area:</b> {AWATER} sq. meters<br>
+        `,
+      },
+      
     });
 
     layer
