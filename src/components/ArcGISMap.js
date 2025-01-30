@@ -2,8 +2,79 @@ import React, { useEffect, useRef, useState } from "react";
 import Map from "@arcgis/core/Map";
 import MapView from "@arcgis/core/views/MapView";
 import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
-// import GenerateReport from "./components/GenerateReport"; // Import the GenerateReport component
 import "@arcgis/core/assets/esri/themes/light/main.css"; // ArcGIS CSS
+
+const SearchBox = ({ searchField, setSearchField, searchValue, setSearchValue, onSearch }) => (
+  <div style={{ position: "absolute", bottom: "100px", left: "20px", zIndex: 1000 }}>
+    <form
+      onSubmit={onSearch}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: "white",
+        padding: "20px",
+        borderRadius: "10px",
+        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+        width: "250px",
+      }}
+    >
+      <label style={{ marginBottom: "10px", fontWeight: "bold" }}>
+        Search By:
+        <select
+          value={searchField}
+          onChange={(e) => setSearchField(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px",
+            margin: "10px 0",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }}
+        >
+          <option value="P1_001N">Total Population</option>
+          <option value="DP03_0004PE">Employment Rate</option>
+          <option value="DP02_0001E">Total Households</option>
+          <option value="S1901_C01_012E">Median Household Income</option>
+          <option value="H1_001N">Total Housing Units</option>
+          <option value="S1501_C02_015E">Bachelor's Degree or Higher</option>
+          <option value="S2701_C03_001E">Without Health Care Coverage</option>
+        </select>
+      </label>
+
+      <label style={{ marginBottom: "10px", fontWeight: "bold" }}>
+        Value:
+        <input
+          type="text"
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          placeholder="Enter search value"
+          style={{
+            width: "100%",
+            padding: "10px",
+            margin: "10px 0",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }}
+        />
+      </label>
+
+      <button
+        type="submit"
+        style={{
+          padding: "10px",
+          backgroundColor: "#007BFF",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+          fontWeight: "bold",
+        }}
+      >
+        Search
+      </button>
+    </form>
+  </div>
+);
 
 const ArcGISMap = () => {
   const viewDivRef = useRef(null);
@@ -12,9 +83,8 @@ const ArcGISMap = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedLayer, setSelectedLayer] = useState("censusTracts"); // Toggle state: "censusTracts" or "zipCodes"
-  const [searchField, setSearchField] = useState("tract_id");
+  const [searchField, setSearchField] = useState("P1_001N");
   const [searchValue, setSearchValue] = useState("");
-  const [selectedFeatures, setSelectedFeatures] = useState([]); // To store selected features for the report
 
   useEffect(() => {
     const newMap = new Map({
@@ -106,34 +176,6 @@ const ArcGISMap = () => {
       url: geojsonUrl,
       title: selectedLayer === "censusTracts" ? "Census Tracts" : "Zip Codes",
       renderer: selectedLayer === "censusTracts" ? censusTractRenderer : zipCodeRenderer,
-      popupTemplate:
-        selectedLayer === "censusTracts"
-          ? {
-              title: "Census Tract: {NAMELSAD}",
-              content: `
-                <b>Total Population:</b> {P1_001N}<br>
-                <b>Employment Rate:</b> {DP03_0004PE}%<br>
-                <b>Total Households:</b> {DP02_0001E}<br>
-                <b>Median Household Income:</b> $ {S1901_C01_012E}<br>
-                <b>Total Housing Units:</b> {H1_001N}<br>
-                <b>Bachelor's Degree or Higher:</b> {S1501_C02_015E}%<br>
-                <b>Without Health Care Coverage:</b> {S2701_C03_001E}%<br>
-                <b>Hispanic or Latino (of any race):</b> {P9_003N}<br>
-              `,
-            }
-          : {
-              title: "Zip Code: {popup_zip_code}",
-              content: `
-                <b>Total Population:</b> {number}<br>
-                <b>Employment Rate:</b> {employent_rate} <br>
-                <b>Total Households:</b> {households} <br>
-                <b>Median Household Income:</b> $ {S1901_C01_012E}<br>
-                <b>Total Housing Units:</b> {H1_001N}<br>
-                <b>Bachelor's Degree or Higher:</b> {S1501_C02_015E}%<br>
-                <b>Without Health Care Coverage:</b> {S2701_C03_001E}%<br>
-                <b>Hispanic or Latino (of any race):</b> {P9_003N}<br>
-              `,
-            },
     });
 
     layer
@@ -147,16 +189,6 @@ const ArcGISMap = () => {
       });
 
     map.add(layer);
-
-    // Add selection logic for report
-    view.on("click", (event) => {
-      view.hitTest(event).then((response) => {
-        if (response.results.length) {
-          const selected = response.results.map((res) => res.graphic.attributes);
-          setSelectedFeatures((prev) => [...prev, ...selected]);
-        }
-      });
-    });
   }, [selectedLayer, map, view]);
 
   const toggleLayer = () => {
@@ -165,23 +197,10 @@ const ArcGISMap = () => {
     );
   };
 
-  const handleLogin = (username, password) => {
-    if (username === "admin" && password === "password123") {
-      setIsAdmin(true);
-      setShowLogin(false);
-    } else {
-      alert("Invalid username or password.");
-    }
-  };
-
-  const handleLogout = () => {
-    setIsAdmin(false);
-  };
-
   const handleSearch = (e) => {
     e.preventDefault();
     console.log(`Searching for ${searchField}: ${searchValue}`);
-    // Add logic to highlight and zoom to searched area.
+    // Add logic to perform the search and highlight features.
   };
 
   return (
@@ -228,12 +247,16 @@ const ArcGISMap = () => {
         </button>
       </div>
 
-      
+      {/* Search Box Component */}
+      <SearchBox
+        searchField={searchField}
+        setSearchField={setSearchField}
+        searchValue={searchValue}
+        setSearchValue={setSearchValue}
+        onSearch={handleSearch}
+      />
     </div>
   );
 };
-
-console.log("Path to GenerateReport:", require.resolve("./GenerateReport"));
-
 
 export default ArcGISMap;
