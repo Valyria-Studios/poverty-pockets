@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Map from "@arcgis/core/Map";
 import MapView from "@arcgis/core/views/MapView";
 import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer";
+// import GenerateReport from "./components/GenerateReport"; // Import the GenerateReport component
 import "@arcgis/core/assets/esri/themes/light/main.css"; // ArcGIS CSS
 
 const ArcGISMap = () => {
@@ -13,6 +14,7 @@ const ArcGISMap = () => {
   const [selectedLayer, setSelectedLayer] = useState("censusTracts"); // Toggle state: "censusTracts" or "zipCodes"
   const [searchField, setSearchField] = useState("tract_id");
   const [searchValue, setSearchValue] = useState("");
+  const [selectedFeatures, setSelectedFeatures] = useState([]); // To store selected features for the report
 
   useEffect(() => {
     const newMap = new Map({
@@ -93,7 +95,7 @@ const ArcGISMap = () => {
         type: "simple-fill",
         color: "rgba(0, 0, 0, 0)", // Transparent fill
         outline: {
-          color: "blue",
+          color: "black",
           width: 1,
         },
       },
@@ -104,31 +106,34 @@ const ArcGISMap = () => {
       url: geojsonUrl,
       title: selectedLayer === "censusTracts" ? "Census Tracts" : "Zip Codes",
       renderer: selectedLayer === "censusTracts" ? censusTractRenderer : zipCodeRenderer,
-      popupTemplate: {
-        title: "{NAMELSAD}",
-        content: `
-          <b>ID:</b> {GEOID}<br>
-          <b>Land Area:</b> {ALAND} sq. meters<br>
-          <b>Water Area:</b> {AWATER} sq. meters<br>
-          ${
-            selectedLayer === "censusTracts"
-              ? `
-            <b>Adopted By:</b> {adopted_by}<br>
-            <b>Last Updated Date:</b> {last_updated_date}<br>
-          `
-              : ""
-          }
-        `,
-      },
-      popupTemplate: {
-        title: "Zip Code: {popup_zip_code}",
-        content: `
-          <b>Region Name:</b> {popup_region_name}<br>
-          <b>Land Area:</b> {ALAND} sq. meters<br>
-          <b>Water Area:</b> {AWATER} sq. meters<br>
-        `,
-      },
-      
+      popupTemplate:
+        selectedLayer === "censusTracts"
+          ? {
+              title: "Census Tract: {NAMELSAD}",
+              content: `
+                <b>Total Population:</b> {P1_001N}<br>
+                <b>Employment Rate:</b> {DP03_0004PE}%<br>
+                <b>Total Households:</b> {DP02_0001E}<br>
+                <b>Median Household Income:</b> $ {S1901_C01_012E}<br>
+                <b>Total Housing Units:</b> {H1_001N}<br>
+                <b>Bachelor's Degree or Higher:</b> {S1501_C02_015E}%<br>
+                <b>Without Health Care Coverage:</b> {S2701_C03_001E}%<br>
+                <b>Hispanic or Latino (of any race):</b> {P9_003N}<br>
+              `,
+            }
+          : {
+              title: "Zip Code: {popup_zip_code}",
+              content: `
+                <b>Total Population:</b> {number}<br>
+                <b>Employment Rate:</b> {employent_rate} <br>
+                <b>Total Households:</b> {households} <br>
+                <b>Median Household Income:</b> $ {S1901_C01_012E}<br>
+                <b>Total Housing Units:</b> {H1_001N}<br>
+                <b>Bachelor's Degree or Higher:</b> {S1501_C02_015E}%<br>
+                <b>Without Health Care Coverage:</b> {S2701_C03_001E}%<br>
+                <b>Hispanic or Latino (of any race):</b> {P9_003N}<br>
+              `,
+            },
     });
 
     layer
@@ -142,6 +147,16 @@ const ArcGISMap = () => {
       });
 
     map.add(layer);
+
+    // Add selection logic for report
+    view.on("click", (event) => {
+      view.hitTest(event).then((response) => {
+        if (response.results.length) {
+          const selected = response.results.map((res) => res.graphic.attributes);
+          setSelectedFeatures((prev) => [...prev, ...selected]);
+        }
+      });
+    });
   }, [selectedLayer, map, view]);
 
   const toggleLayer = () => {
@@ -173,6 +188,27 @@ const ArcGISMap = () => {
     <div style={{ position: "relative", height: "100vh", width: "100vw" }}>
       <div ref={viewDivRef} style={{ height: "100%", width: "100%" }}></div>
 
+      {/* Visual Indicator for Admin View */}
+      {isAdmin && (
+        <div
+          style={{
+            position: "absolute",
+            top: "10px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            color: "white",
+            padding: "10px 20px",
+            borderRadius: "5px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            zIndex: 1000,
+          }}
+        >
+          Admin View Active
+        </div>
+      )}
+
       {/* Layer Toggle Button */}
       <div style={{ position: "absolute", bottom: "20px", left: "20px", zIndex: 1000 }}>
         <button
@@ -192,173 +228,12 @@ const ArcGISMap = () => {
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div style={{ position: "absolute", bottom: "100px", left: "20px", zIndex: 1000 }}>
-        <form
-          onSubmit={handleSearch}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            backgroundColor: "white",
-            padding: "20px",
-            borderRadius: "10px",
-            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-            width: "250px",
-          }}
-        >
-          <label style={{ marginBottom: "10px", fontWeight: "bold" }}>
-            Search By:
-            <select
-              value={searchField}
-              onChange={(e) => setSearchField(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px",
-                margin: "10px 0",
-                borderRadius: "5px",
-                border: "1px solid #ccc",
-              }}
-            >
-              <option value="tract_id">Tract ID</option>
-              <option value="geoid">GEOID</option>
-            </select>
-          </label>
-
-          <label style={{ marginBottom: "10px", fontWeight: "bold" }}>
-            Value:
-            <input
-              type="text"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="Enter search value"
-              style={{
-                width: "100%",
-                padding: "10px",
-                margin: "10px 0",
-                borderRadius: "5px",
-                border: "1px solid #ccc",
-              }}
-            />
-          </label>
-
-          <button
-            type="submit"
-            style={{
-              padding: "10px",
-              backgroundColor: "#007BFF",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-              fontWeight: "bold",
-            }}
-          >
-            Search
-          </button>
-        </form>
-      </div>
-
-      {/* Admin Controls */}
-      <div style={{ position: "absolute", bottom: "20px", right: "20px" }}>
-        {isAdmin ? (
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#FF4C4C",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-            }}
-          >
-            Logout
-          </button>
-        ) : (
-          <>
-            <button
-              onClick={() => setShowLogin(!showLogin)}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#007BFF",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-              }}
-            >
-              {showLogin ? "Close Login" : "Admin Login"}
-            </button>
-            {showLogin && (
-              <div
-                style={{
-                  position: "fixed",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  backgroundColor: "white",
-                  padding: "20px",
-                  borderRadius: "10px",
-                  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-                  width: "300px",
-                  zIndex: 1000,
-                }}
-              >
-                <h2 style={{ marginBottom: "20px" }}>Admin Login</h2>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const username = e.target.username.value;
-                    const password = e.target.password.value;
-                    handleLogin(username, password);
-                  }}
-                >
-                  <input
-                    type="text"
-                    name="username"
-                    placeholder="Username"
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      margin: "10px 0",
-                      borderRadius: "5px",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                  <input
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      margin: "10px 0",
-                      borderRadius: "5px",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                  <button
-                    type="submit"
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      backgroundColor: "#007BFF",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "5px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Login
-                  </button>
-                </form>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      
     </div>
   );
 };
+
+console.log("Path to GenerateReport:", require.resolve("./GenerateReport"));
+
 
 export default ArcGISMap;
