@@ -126,7 +126,11 @@ const ArcGISMap = () => {
       map: newMap,
       zoom: 10,
       center: [-122.0081095, 37.5371513],
+      popup: {
+        autoOpenEnabled: false,  // You can adjust this setting
+      },
     });
+    
 
     setMap(newMap);
     setView(mapView);
@@ -146,30 +150,27 @@ const ArcGISMap = () => {
         ? `${process.env.PUBLIC_URL}/bay_area_tracts_geometry.geojson`
         : `${process.env.PUBLIC_URL}/BayAreaZipCodes.geojson`;
 
-    const geoJsonLayer = new GeoJSONLayer({
-      url: geojsonUrl,
-      renderer: {
-        type: "simple",
-        symbol: {
-          type: "simple-fill",
-          color: "rgba(255, 0, 0, 0.3)",
-          outline: {
-            color: "black",
-            width: 1,
+        const geoJsonLayer = new GeoJSONLayer({
+          url: geojsonUrl,
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "simple-fill",
+              color: "rgba(255, 0, 0, 0.3)",
+              outline: {
+                color: "black",
+                width: 1,
+              },
+            },
           },
-        },
-      },
-      popupTemplate: {
-        title:
-          selectedLayer === "censusTracts"
-            ? "Census Tract: {NAMELSAD}"
-            : "Zip Code: {ZIP_CODE}",
-        content:
-          selectedLayer === "censusTracts"
-            ? "<b>Total Population:</b> {P1_001N}<br><b>Employment Rate:</b> {DP03_0004PE}%"
-            : "<b>Post Office Name:</b> {PO_NAME}<br><b>Total Population:</b> {POPULATION}",
-      },
-    });
+          popupTemplate: {
+            title: selectedLayer === "censusTracts" ? "{NAMELSAD}" : "Zip Code: {ZIP_CODE}",
+            content: selectedLayer === "censusTracts"
+              ? "<b>Total Population:</b> {P1_001N}<br><b>Employment Rate:</b> {DP03_0004PE}%"
+              : "<b>Post Office Name:</b> {PO_NAME}<br><b>Total Population:</b> {POPULATION}",
+          },
+        });
+        
 
     geoJsonLayer
       .when(() => {
@@ -203,27 +204,30 @@ const ArcGISMap = () => {
     setSearchStatus("");
 
     if (!geoJsonLayerRef.current) {
-      setSearchStatus("Layer is not ready. Please wait and try again.");
-      return;
+        setSearchStatus("Layer is not ready. Please wait and try again.");
+        return;
     }
 
     if (!layerLoaded) {
-      setSearchStatus("Layer is still loading. Please wait and try again.");
-      return;
+        setSearchStatus("Layer is still loading. Please wait and try again.");
+        return;
     }
 
     const result = await performSearch({
-      view,
-      geoJsonLayer: geoJsonLayerRef.current,
-      searchField,
-      searchValue,
+        view,
+        geoJsonLayer: geoJsonLayerRef.current,
+        searchField,
+        searchValue,
     });
 
     if (!result.success) {
-      console.error("Search error:", result.message);
-      setSearchStatus(result.message);
+        console.error("Search error:", result.message);
+        setSearchStatus(result.message);
+    } else {
+        console.log("Search completed successfully.");
     }
-  };
+};
+
 
   const toggleLayer = () => {
     setSelectedLayer((prev) =>
