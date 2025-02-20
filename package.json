@@ -10,6 +10,8 @@
     "@testing-library/user-event": "^13.5.0",
     "@turf/turf": "^7.2.0",
     "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
     "geojson-bbox": "^0.0.1",
     "geojson-geometries-lookup": "^0.5.0",
     "react": "^18.3.1",
@@ -41,5 +43,18 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "description": "## Overview This project visualizes poverty pockets in the Bay Area using GeoJSON data layers rendered on an interactive map powered by ArcGIS and React. The project allows users to distinguish between **adopted** and **not adopted** areas visually, with color-coded polygons on the map. Administrators can manage adoption statuses and view audit logs.",
+  "main": "server.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Valyria-Studios/poverty-pockets.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Valyria-Studios/poverty-pockets/issues"
+  },
+  "homepage": "https://github.com/Valyria-Studios/poverty-pockets#readme"
 }
